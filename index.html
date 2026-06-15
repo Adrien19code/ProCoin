@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProCoin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <h1>Pro<span>Coin</span></h1>
+    <p>Connecte-toi pour continuer</p>
+
+    <input id="usernameInput" type="text" placeholder="Pseudo">
+    <input id="passwordInput" type="password" placeholder="Mot de passe">
+
+    <button onclick="register()">Créer un compte</button>
+    <button class="secondary" onclick="login()">Se connecter</button>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+
+  <div class="topbar">
+    <div>
+      <div class="logo">Pro<span>Coin</span></div>
+      <p id="welcomeText" class="welcome"></p>
+    </div>
+
+    <div class="wallet-mini">
+      <div id="coinsTop">🪙 0</div>
+      <div id="diamondsTop">💎 100</div>
+    </div>
+  </div>
+
+  <section id="accueil" class="page active">
+    <div class="hero">
+      <h1>Bienvenue 👋</h1>
+      <p>Mise tes diamants, gagne des pièces et progresse.</p>
+    </div>
+
+    <div class="balance-grid">
+      <div class="balance-card">
+        <div class="icon">💎</div>
+        <small>Diamants disponibles</small>
+        <h2 id="diamondsHome">100</h2>
+      </div>
+
+      <div class="balance-card">
+        <div class="icon">🪙</div>
+        <small>Pièces gagnées</small>
+        <h2 id="coinsHome">0</h2>
+      </div>
+    </div>
+
+    <div class="action-card">
+      📺 Regarder une pub
+      <p>Gagne +20 diamants par pub.</p>
+      <p id="adsText">Pubs restantes aujourd'hui : 10/10</p>
+      <button onclick="watchAd()">Regarder une pub</button>
+    </div>
+
+    <div class="secondary-card">
+      <h3>Paris actifs</h3>
+      <p id="activeCountHome">Tu as actuellement 0 pari actif.</p>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+  </section>
+
+  <section id="paris" class="page">
+    <h2 class="section-title">Paris</h2>
+
+    <div class="tabs">
+      <button class="tab active" onclick="openBetTab('available', this)">Disponibles</button>
+      <button class="tab" onclick="openBetTab('active', this)">Actifs</button>
+      <button class="tab" onclick="openBetTab('won', this)">Gagnés</button>
+      <button class="tab" onclick="openBetTab('lost', this)">Perdus</button>
+    </div>
+
+    <div id="availableBets"></div>
+    <div id="activeBets" style="display:none;"></div>
+    <div id="wonBets" style="display:none;"></div>
+    <div id="lostBets" style="display:none;"></div>
+  </section>
+
+  <section id="boutique" class="page">
+    <h2 class="section-title">Boutique</h2>
+
+    <div class="shop-item">
+      <div class="shop-icon">🎁</div>
+      <div class="shop-info">
+        <h3>Carte Amazon 10€</h3>
+        <p>Récompense fictive</p>
+        <div class="disabled">Bientôt disponible</div>
+      </div>
+      <div class="price">1000 🪙</div>
+    </div>
+
+    <div class="shop-item">
+      <div class="shop-icon">🎮</div>
+      <div class="shop-info">
+        <h3>Carte Steam 20€</h3>
+        <p>Récompense fictive</p>
+        <div class="disabled">Bientôt disponible</div>
+      </div>
+      <div class="price">2000 🪙</div>
+    </div>
+
+    <div class="shop-item">
+      <div class="shop-icon">🎵</div>
+      <div class="shop-info">
+        <h3>Spotify Premium</h3>
+        <p>Récompense fictive</p>
+        <div class="disabled">Bientôt disponible</div>
+      </div>
+      <div class="price">1500 🪙</div>
+    </div>
+  </section>
+
+</div>
+
+<nav id="bottomNav" class="bottom-nav hidden">
+  <button class="nav-btn active" onclick="openPage('accueil', this)">
+    <span>🏠</span>Accueil
+  </button>
+
+  <button class="nav-btn" onclick="openPage('paris', this)">
+    <span>🎯</span>Paris
+  </button>
+
+  <button class="nav-btn" onclick="openPage('boutique', this)">
+    <span>🪙</span>Boutique
+  </button>
+</nav>
+
+<script src="script.js"></script>
+</body>
+</html>
