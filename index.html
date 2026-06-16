@@ -69,6 +69,13 @@
       <button onclick="watchAd()">Regarder une pub</button>
     </div>
 
+    <div class="action-card wheel-card">
+      🎡 Roue quotidienne
+      <p>Tourne la roue 1 fois par jour pour gagner des diamants.</p>
+      <p id="wheelText">Roue disponible aujourd'hui ✅</p>
+      <button onclick="spinWheel()">Tourner la roue</button>
+    </div>
+
     <div class="secondary-card">
       <h3>Paris actifs</h3>
       <p id="activeCountHome">Tu as actuellement 0 pari actif.</p>
@@ -130,15 +137,19 @@
   <section id="admin" class="page">
     <h2 class="section-title">Admin</h2>
 
-    <div class="admin-card">
-      <h3>Créer un pari</h3>
+<div class="admin-card">
+  <h3>Créer un pari</h3>
 
-      <input id="adminTitle" type="text" placeholder="Titre du pari">
-      <input id="adminCategory" type="text" placeholder="Catégorie">
-      <input id="adminOptions" type="text" placeholder="Choix séparés par des virgules">
+  <input id="adminTitle" type="text" placeholder="Titre du pari">
 
-      <button onclick="createBet()">Créer le pari</button>
-    </div>
+  <input id="adminCategory" type="text" placeholder="Catégorie">
+
+  <input id="adminDate" type="text" placeholder="Date du résultat ex : 01/01/2027">
+
+  <input id="adminOptions" type="text" placeholder="Choix séparés par des virgules">
+
+  <button onclick="createBet()">Créer le pari</button>
+</div>
 
     <h3 class="admin-subtitle">Paris existants</h3>
     <div id="adminBetsList"></div>

@@ -1,11 +1,7 @@
 const SUPABASE_URL = "https://gynanrnvgwwpussgkzjh.supabase.co";
-
 const SUPABASE_KEY = "sb_publishable__SIIelDhxaZnUXDxMWOX1A_JAW1ZmHh";
 
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 
@@ -14,33 +10,30 @@ let diamonds = 100;
 let adsWatchedToday = 0;
 let maxAdsPerDay = 10;
 
-let availableBets = JSON.parse(localStorage.getItem("procoin_available_bets")) || [
-  { id: 1, category: "Football", title: "PSG vs Marseille", options: ["PSG", "Nul", "OM"], closed: false },
-  { id: 2, category: "Basket", title: "Lakers vs Celtics", options: ["Lakers", "Nul", "Celtics"], closed: false },
-  { id: 3, category: "Gaming", title: "GTA 6 sortira-t-il en 2026 ?", options: ["Oui", "Non"], closed: false },
-  { id: 4, category: "Cinéma", title: "Le prochain Marvel sera numéro 1 ?", options: ["Oui", "Non"], closed: false },
-  { id: 5, category: "Football", title: "Real Madrid vs Barcelone", options: ["Real", "Nul", "Barça"], closed: false },
-  { id: 6, category: "Musique", title: "Un artiste français sera top 1 Spotify ?", options: ["Oui", "Non"], closed: false },
-  { id: 7, category: "Gaming", title: "La Nintendo Switch 2 dépassera 10M de ventes ?", options: ["Oui", "Non"], closed: false },
-  { id: 8, category: "Basket", title: "Warriors vs Bulls", options: ["Warriors", "Nul", "Bulls"], closed: false }
-];
-
 let activeBets = [];
 let wonBets = [];
 let lostBets = [];
 
+let availableBets = [
+  { id: 1, category: "Football", title: "PSG vs Marseille", options: ["PSG", "Nul", "OM"], result_date: "À définir", closed: false },
+  { id: 2, category: "Basket", title: "Lakers vs Celtics", options: ["Lakers", "Nul", "Celtics"], result_date: "À définir", closed: false },
+  { id: 3, category: "Gaming", title: "GTA 6 sortira-t-il en 2026 ?", options: ["Oui", "Non"], result_date: "01/01/2027", closed: false }
+];
 
 async function loadBetsFromSupabase() {
   const { data, error } = await supabaseClient
     .from("bets")
-    .select("*");
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Erreur Supabase :", error);
     return;
   }
 
-  console.log("Paris récupérés :", data);
+  availableBets = data;
+  renderBets();
+  renderAdminBets();
 }
 
 function getUsers() {
@@ -49,10 +42,6 @@ function getUsers() {
 
 function saveUsers(users) {
   localStorage.setItem("procoin_users", JSON.stringify(users));
-}
-
-function saveAvailableBets() {
-  localStorage.setItem("procoin_available_bets", JSON.stringify(availableBets));
 }
 
 function register() {
@@ -130,7 +119,6 @@ function saveCurrentUserData() {
   if (!currentUser) return;
 
   const users = getUsers();
-
   if (!users[currentUser]) return;
 
   users[currentUser].coins = coins;
@@ -158,6 +146,7 @@ function showApp() {
   }
 
   updateUI();
+  loadBetsFromSupabase();
 }
 
 function updateUI() {
@@ -169,6 +158,13 @@ function updateUI() {
 
   document.getElementById("adsText").innerText =
     "Pubs restantes aujourd'hui : " + (maxAdsPerDay - adsWatchedToday) + "/" + maxAdsPerDay;
+
+  const wheelText = document.getElementById("wheelText");
+  if (wheelText) {
+    const today = new Date().toDateString();
+    const used = localStorage.getItem("procoin_wheel_date") === today;
+    wheelText.innerText = used ? "Roue déjà utilisée aujourd'hui ❌" : "Roue disponible aujourd'hui ✅";
+  }
 
   document.getElementById("activeCountHome").innerText =
     "Tu as actuellement " + activeBets.length + " pari(s) actif(s).";
@@ -214,11 +210,42 @@ function watchAd() {
   updateUI();
 }
 
+function spinWheel() {
+  const today = new Date().toDateString();
+
+  if (localStorage.getItem("procoin_wheel_date") === today) {
+    alert("Tu as déjà tourné la roue aujourd'hui.");
+    return;
+  }
+
+  const rewards = [10, 20, 30, 50, 100];
+  const reward = rewards[Math.floor(Math.random() * rewards.length)];
+
+  diamonds += reward;
+  localStorage.setItem("procoin_wheel_date", today);
+
+  alert("🎡 Bravo ! Tu gagnes " + reward + " diamants 💎");
+  updateUI();
+}
+
+function hasAlreadyPlayed(betId) {
+  return (
+    activeBets.some(bet => bet.originalBetId === betId) ||
+    wonBets.some(bet => bet.originalBetId === betId) ||
+    lostBets.some(bet => bet.originalBetId === betId)
+  );
+}
+
 function placeBet(betId, choice) {
   let bet = availableBets.find(item => item.id === betId);
 
   if (!bet || bet.closed) {
     alert("Ce pari est terminé.");
+    return;
+  }
+
+  if (hasAlreadyPlayed(betId)) {
+    alert("Tu as déjà parié sur ce pari.");
     return;
   }
 
@@ -250,37 +277,50 @@ function placeBet(betId, choice) {
   updateUI();
 }
 
-function createBet() {
+async function createBet() {
   const title = document.getElementById("adminTitle").value.trim();
   const category = document.getElementById("adminCategory").value.trim();
+  const resultDate = document.getElementById("adminDate").value.trim();
   const optionsText = document.getElementById("adminOptions").value.trim();
 
-  const options = optionsText.split(",").map(option => option.trim()).filter(option => option !== "");
+  const options = optionsText
+    .split(",")
+    .map(option => option.trim())
+    .filter(option => option !== "");
 
-  if (!title || !category || options.length < 2) {
-    alert("Remplis le titre, la catégorie et au moins 2 choix.");
+  if (!title || !category || !resultDate || options.length < 2) {
+    alert("Remplis le titre, la catégorie, la date et au moins 2 choix.");
     return;
   }
 
-  availableBets.push({
-    id: Date.now(),
-    category: category,
-    title: title,
-    options: options,
-    closed: false
-  });
+  const { error } = await supabaseClient
+    .from("bets")
+    .insert([
+      {
+        title: title,
+        category: category,
+        result_date: resultDate,
+        options: options,
+        closed: false
+      }
+    ]);
 
-  saveAvailableBets();
+  if (error) {
+    console.error(error);
+    alert("Erreur création pari.");
+    return;
+  }
 
   document.getElementById("adminTitle").value = "";
   document.getElementById("adminCategory").value = "";
+  document.getElementById("adminDate").value = "";
   document.getElementById("adminOptions").value = "";
 
   alert("Pari créé ✅");
-  updateUI();
+  await loadBetsFromSupabase();
 }
 
-function validateBet(betId) {
+async function validateBet(betId) {
   const bet = availableBets.find(item => item.id === betId);
 
   if (!bet) return;
@@ -292,8 +332,19 @@ function validateBet(betId) {
     return;
   }
 
-  bet.closed = true;
-  bet.result = result;
+  const { error } = await supabaseClient
+    .from("bets")
+    .update({
+      closed: true,
+      result: result
+    })
+    .eq("id", betId);
+
+  if (error) {
+    console.error(error);
+    alert("Erreur validation résultat.");
+    return;
+  }
 
   const users = getUsers();
 
@@ -319,20 +370,28 @@ function validateBet(betId) {
   });
 
   saveUsers(users);
-  saveAvailableBets();
-
   loadUserData();
 
   alert("Résultat validé ✅");
+  await loadBetsFromSupabase();
   updateUI();
 }
 
-function deleteBet(betId) {
+async function deleteBet(betId) {
   if (!confirm("Supprimer ce pari ?")) return;
 
-  availableBets = availableBets.filter(item => item.id !== betId);
-  saveAvailableBets();
-  updateUI();
+  const { error } = await supabaseClient
+    .from("bets")
+    .delete()
+    .eq("id", betId);
+
+  if (error) {
+    console.error(error);
+    alert("Erreur suppression pari.");
+    return;
+  }
+
+  await loadBetsFromSupabase();
 }
 
 function renderBets() {
@@ -354,11 +413,17 @@ function renderAvailableBets() {
   }
 
   openBets.forEach((bet, index) => {
+    const alreadyPlayed = hasAlreadyPlayed(bet.id);
+
     let optionsHTML = "";
 
-    bet.options.forEach(option => {
-      optionsHTML += `<button onclick="placeBet(${bet.id}, '${option}')">${option}</button>`;
-    });
+    if (alreadyPlayed) {
+      optionsHTML = `<div class="already-played">Pari déjà placé ✅</div>`;
+    } else {
+      bet.options.forEach(option => {
+        optionsHTML += `<button onclick="placeBet(${bet.id}, '${option}')">${option}</button>`;
+      });
+    }
 
     container.innerHTML += `
       <div class="bet-card">
@@ -366,7 +431,11 @@ function renderAvailableBets() {
           <span>${bet.category}</span>
           <span>Mise libre 💎</span>
         </div>
+
+        <div class="result-date">📅 Résultat : ${bet.result_date || "Date à définir"}</div>
+
         <div class="bet-title">${bet.title}</div>
+
         <div class="bet-options ${bet.options.length === 2 ? "two" : ""}">
           ${optionsHTML}
         </div>
@@ -457,7 +526,6 @@ function renderLostBets() {
 
 function renderAdminBets() {
   const container = document.getElementById("adminBetsList");
-
   if (!container) return;
 
   container.innerHTML = "";
@@ -469,7 +537,11 @@ function renderAdminBets() {
           <span>${bet.category}</span>
           <span>${bet.closed ? "Terminé" : "Ouvert"}</span>
         </div>
+
+        <div class="result-date">📅 Résultat prévu : ${bet.result_date || "Date à définir"}</div>
+
         <div class="bet-title">${bet.title}</div>
+
         <p>Choix : ${bet.options.join(", ")}</p>
         <p>Résultat : ${bet.result || "Non validé"}</p>
 
@@ -483,9 +555,6 @@ function renderAdminBets() {
 }
 
 window.onload = function () {
-  
-  loadBetsFromSupabase();
-
   const users = getUsers();
 
   if (!users["admin"]) {
@@ -509,4 +578,6 @@ window.onload = function () {
     loadUserData();
     showApp();
   }
+
+  loadBetsFromSupabase();
 };

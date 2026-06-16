@@ -457,3 +457,24 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 10px 25px rgba(255, 185, 0, 0.25);
 }
+
+.result-date {
+  color: #ffc928;
+  font-size: 13px;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.already-played {
+  grid-column: 1 / -1;
+  background: rgba(255,255,255,0.08);
+  color: #ffc928;
+  padding: 13px;
+  border-radius: 15px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.wheel-card {
+  background: linear-gradient(135deg, #ff9f0a, #7c3aed);
+}
