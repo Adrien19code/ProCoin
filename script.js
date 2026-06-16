@@ -1,3 +1,12 @@
+const SUPABASE_URL = "https://gynanrnvgwwpussgkzjh.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable__SIIelDhxaZnUXDxMWOX1A_JAW1ZmHh";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
 let currentUser = null;
 
 let coins = 0;
@@ -19,6 +28,20 @@ let availableBets = JSON.parse(localStorage.getItem("procoin_available_bets")) |
 let activeBets = [];
 let wonBets = [];
 let lostBets = [];
+
+
+async function loadBetsFromSupabase() {
+  const { data, error } = await supabaseClient
+    .from("bets")
+    .select("*");
+
+  if (error) {
+    console.error("Erreur Supabase :", error);
+    return;
+  }
+
+  console.log("Paris récupérés :", data);
+}
 
 function getUsers() {
   return JSON.parse(localStorage.getItem("procoin_users")) || {};
@@ -460,6 +483,9 @@ function renderAdminBets() {
 }
 
 window.onload = function () {
+  
+  loadBetsFromSupabase();
+
   const users = getUsers();
 
   if (!users["admin"]) {
