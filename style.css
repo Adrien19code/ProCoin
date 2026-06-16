@@ -478,8 +478,9 @@ body {
 
 .wheel-card {
   background: linear-gradient(135deg, #ff9f0a, #7c3aed);
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+  padding-bottom: 35px;
 }
 
 .wheel-wrapper {
@@ -558,4 +559,8 @@ body {
 
 .wheel.spinning {
   pointer-events: none;
+}
+
+.secondary-card {
+  margin-top: 22px;
 }
