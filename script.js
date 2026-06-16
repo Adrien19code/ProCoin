@@ -5,19 +5,15 @@ let diamonds = 100;
 let adsWatchedToday = 0;
 let maxAdsPerDay = 10;
 
-let availableBets = [
-  { id: 1, category: "Football", title: "PSG vs Marseille", options: ["PSG", "Nul", "OM"] },
-  { id: 2, category: "Basket", title: "Lakers vs Celtics", options: ["Lakers", "Nul", "Celtics"] },
-  { id: 3, category: "Gaming", title: "GTA 6 aura un trailer ce mois-ci ?", options: ["Oui", "Non"] },
-  { id: 4, category: "Cinéma", title: "Le prochain Marvel sera numéro 1 ?", options: ["Oui", "Non"] },
-  { id: 5, category: "Football", title: "Real Madrid vs Barcelone", options: ["Real", "Nul", "Barça"] },
-  { id: 6, category: "Musique", title: "Un artiste français sera top 1 Spotify ?", options: ["Oui", "Non"] },
-  { id: 7, category: "Gaming", title: "La Nintendo Switch 2 dépassera 10M de ventes ?", options: ["Oui", "Non"] },
-  { id: 8, category: "Basket", title: "Warriors vs Bulls", options: ["Warriors", "Nul", "Bulls"] },
-  { id: 9, category: "Foot", title: "Manchester City marquera plus de 2 buts ?", options: ["Oui", "Non"] },
-  { id: 10, category: "YouTube", title: "Un créateur dépassera 1M d'abonnés ce mois-ci ?", options: ["Oui", "Non"] },
-  { id: 11, category: "Gaming", title: "Fortnite sortira une grosse collaboration ?", options: ["Oui", "Non"] },
-  { id: 12, category: "Sport", title: "Un match ira en prolongation ?", options: ["Oui", "Non"] }
+let availableBets = JSON.parse(localStorage.getItem("procoin_available_bets")) || [
+  { id: 1, category: "Football", title: "PSG vs Marseille", options: ["PSG", "Nul", "OM"], closed: false },
+  { id: 2, category: "Basket", title: "Lakers vs Celtics", options: ["Lakers", "Nul", "Celtics"], closed: false },
+  { id: 3, category: "Gaming", title: "GTA 6 sortira-t-il en 2026 ?", options: ["Oui", "Non"], closed: false },
+  { id: 4, category: "Cinéma", title: "Le prochain Marvel sera numéro 1 ?", options: ["Oui", "Non"], closed: false },
+  { id: 5, category: "Football", title: "Real Madrid vs Barcelone", options: ["Real", "Nul", "Barça"], closed: false },
+  { id: 6, category: "Musique", title: "Un artiste français sera top 1 Spotify ?", options: ["Oui", "Non"], closed: false },
+  { id: 7, category: "Gaming", title: "La Nintendo Switch 2 dépassera 10M de ventes ?", options: ["Oui", "Non"], closed: false },
+  { id: 8, category: "Basket", title: "Warriors vs Bulls", options: ["Warriors", "Nul", "Bulls"], closed: false }
 ];
 
 let activeBets = [];
@@ -30,6 +26,10 @@ function getUsers() {
 
 function saveUsers(users) {
   localStorage.setItem("procoin_users", JSON.stringify(users));
+}
+
+function saveAvailableBets() {
+  localStorage.setItem("procoin_available_bets", JSON.stringify(availableBets));
 }
 
 function register() {
@@ -97,7 +97,7 @@ function loadUserData() {
 
   coins = user.coins;
   diamonds = user.diamonds;
-  adsWatchedToday = user.adsWatchedToday;
+  adsWatchedToday = user.adsWatchedToday || 0;
   activeBets = user.activeBets || [];
   wonBets = user.wonBets || [];
   lostBets = user.lostBets || [];
@@ -107,6 +107,8 @@ function saveCurrentUserData() {
   if (!currentUser) return;
 
   const users = getUsers();
+
+  if (!users[currentUser]) return;
 
   users[currentUser].coins = coins;
   users[currentUser].diamonds = diamonds;
@@ -126,12 +128,10 @@ function showApp() {
 
   const adminBtn = document.getElementById("adminNavBtn");
 
-  if (adminBtn) {
-    if (currentUser === "admin") {
-      adminBtn.classList.remove("hidden");
-    } else {
-      adminBtn.classList.add("hidden");
-    }
+  if (currentUser === "admin") {
+    adminBtn.classList.remove("hidden");
+  } else {
+    adminBtn.classList.add("hidden");
   }
 
   updateUI();
@@ -151,6 +151,7 @@ function updateUI() {
     "Tu as actuellement " + activeBets.length + " pari(s) actif(s).";
 
   renderBets();
+  renderAdminBets();
   saveCurrentUserData();
 }
 
@@ -193,6 +194,11 @@ function watchAd() {
 function placeBet(betId, choice) {
   let bet = availableBets.find(item => item.id === betId);
 
+  if (!bet || bet.closed) {
+    alert("Ce pari est terminé.");
+    return;
+  }
+
   let amount = prompt("Combien de diamants veux-tu miser ?\nTu as " + diamonds + " diamants.");
   amount = Number(amount);
 
@@ -210,6 +216,7 @@ function placeBet(betId, choice) {
 
   activeBets.push({
     id: Date.now(),
+    originalBetId: bet.id,
     title: bet.title,
     category: bet.category,
     choice: choice,
@@ -220,25 +227,88 @@ function placeBet(betId, choice) {
   updateUI();
 }
 
-function markBetWon(id) {
-  let bet = activeBets.find(item => item.id === id);
-  let gain = bet.amount * 2;
+function createBet() {
+  const title = document.getElementById("adminTitle").value.trim();
+  const category = document.getElementById("adminCategory").value.trim();
+  const optionsText = document.getElementById("adminOptions").value.trim();
 
-  coins += gain;
-  activeBets = activeBets.filter(item => item.id !== id);
-  wonBets.push({ ...bet, gain: gain });
+  const options = optionsText.split(",").map(option => option.trim()).filter(option => option !== "");
 
-  alert("Pari gagné ✅\nTu gagnes " + gain + " pièces.");
+  if (!title || !category || options.length < 2) {
+    alert("Remplis le titre, la catégorie et au moins 2 choix.");
+    return;
+  }
+
+  availableBets.push({
+    id: Date.now(),
+    category: category,
+    title: title,
+    options: options,
+    closed: false
+  });
+
+  saveAvailableBets();
+
+  document.getElementById("adminTitle").value = "";
+  document.getElementById("adminCategory").value = "";
+  document.getElementById("adminOptions").value = "";
+
+  alert("Pari créé ✅");
   updateUI();
 }
 
-function markBetLost(id) {
-  let bet = activeBets.find(item => item.id === id);
+function validateBet(betId) {
+  const bet = availableBets.find(item => item.id === betId);
 
-  activeBets = activeBets.filter(item => item.id !== id);
-  lostBets.push(bet);
+  if (!bet) return;
 
-  alert("Pari perdu ❌");
+  const result = prompt("Résultat gagnant ?\nChoix possibles : " + bet.options.join(", "));
+
+  if (!result || !bet.options.includes(result)) {
+    alert("Résultat invalide.");
+    return;
+  }
+
+  bet.closed = true;
+  bet.result = result;
+
+  const users = getUsers();
+
+  Object.keys(users).forEach(username => {
+    const user = users[username];
+    const remainingActiveBets = [];
+
+    user.activeBets.forEach(userBet => {
+      if (userBet.originalBetId === betId) {
+        if (userBet.choice === result) {
+          const gain = userBet.amount * 2;
+          user.coins += gain;
+          user.wonBets.push({ ...userBet, gain: gain });
+        } else {
+          user.lostBets.push(userBet);
+        }
+      } else {
+        remainingActiveBets.push(userBet);
+      }
+    });
+
+    user.activeBets = remainingActiveBets;
+  });
+
+  saveUsers(users);
+  saveAvailableBets();
+
+  loadUserData();
+
+  alert("Résultat validé ✅");
+  updateUI();
+}
+
+function deleteBet(betId) {
+  if (!confirm("Supprimer ce pari ?")) return;
+
+  availableBets = availableBets.filter(item => item.id !== betId);
+  saveAvailableBets();
   updateUI();
 }
 
@@ -250,10 +320,17 @@ function renderBets() {
 }
 
 function renderAvailableBets() {
-  let container = document.getElementById("availableBets");
+  const container = document.getElementById("availableBets");
   container.innerHTML = "";
 
-  availableBets.forEach((bet, index) => {
+  const openBets = availableBets.filter(bet => !bet.closed);
+
+  if (openBets.length === 0) {
+    container.innerHTML = `<div class="empty">Aucun pari disponible.</div>`;
+    return;
+  }
+
+  openBets.forEach((bet, index) => {
     let optionsHTML = "";
 
     bet.options.forEach(option => {
@@ -285,7 +362,7 @@ function renderAvailableBets() {
 }
 
 function renderActiveBets() {
-  let container = document.getElementById("activeBets");
+  const container = document.getElementById("activeBets");
   container.innerHTML = "";
 
   if (activeBets.length === 0) {
@@ -302,18 +379,13 @@ function renderActiveBets() {
         </div>
         <div class="bet-title">${bet.title}</div>
         <p>Ton choix : <strong>${bet.choice}</strong></p>
-
-        <div class="result-buttons">
-          <button onclick="markBetWon(${bet.id})">Simuler gagné</button>
-          <button onclick="markBetLost(${bet.id})">Simuler perdu</button>
-        </div>
       </div>
     `;
   });
 }
 
 function renderWonBets() {
-  let container = document.getElementById("wonBets");
+  const container = document.getElementById("wonBets");
   container.innerHTML = "";
 
   if (wonBets.length === 0) {
@@ -337,7 +409,7 @@ function renderWonBets() {
 }
 
 function renderLostBets() {
-  let container = document.getElementById("lostBets");
+  const container = document.getElementById("lostBets");
   container.innerHTML = "";
 
   if (lostBets.length === 0) {
@@ -360,7 +432,50 @@ function renderLostBets() {
   });
 }
 
+function renderAdminBets() {
+  const container = document.getElementById("adminBetsList");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  availableBets.forEach(bet => {
+    container.innerHTML += `
+      <div class="bet-card">
+        <div class="bet-top">
+          <span>${bet.category}</span>
+          <span>${bet.closed ? "Terminé" : "Ouvert"}</span>
+        </div>
+        <div class="bet-title">${bet.title}</div>
+        <p>Choix : ${bet.options.join(", ")}</p>
+        <p>Résultat : ${bet.result || "Non validé"}</p>
+
+        <div class="result-buttons">
+          <button onclick="validateBet(${bet.id})">Valider résultat</button>
+          <button onclick="deleteBet(${bet.id})">Supprimer</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
 window.onload = function () {
+  const users = getUsers();
+
+  if (!users["admin"]) {
+    users["admin"] = {
+      password: "admin123",
+      coins: 0,
+      diamonds: 100,
+      adsWatchedToday: 0,
+      activeBets: [],
+      wonBets: [],
+      lostBets: []
+    };
+
+    saveUsers(users);
+  }
+
   const savedUser = localStorage.getItem("procoin_current_user");
 
   if (savedUser) {
