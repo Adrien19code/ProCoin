@@ -69,12 +69,26 @@
       <button onclick="watchAd()">Regarder une pub</button>
     </div>
 
-    <div class="action-card wheel-card">
-      🎡 Roue quotidienne
-      <p>Tourne la roue 1 fois par jour pour gagner des diamants.</p>
-      <p id="wheelText">Roue disponible aujourd'hui ✅</p>
-      <button onclick="spinWheel()">Tourner la roue</button>
-    </div>
+<div class="action-card wheel-card">
+  <h3>🎡 Roue quotidienne</h3>
+  <p>Tourne la roue 1 fois par jour pour gagner des diamants.</p>
+
+  <div class="wheel-wrapper">
+    <div class="wheel-pointer">▼</div>
+
+<div id="wheel" class="wheel">
+  <span class="wheel-label label-1">10💎</span>
+  <span class="wheel-label label-2">20💎</span>
+  <span class="wheel-label label-3">30💎</span>
+  <span class="wheel-label label-4">50💎</span>
+  <span class="wheel-label label-5">75💎</span>
+  <span class="wheel-label label-6">100💎</span>
+  <div class="wheel-center">GO</div>
+</div>
+
+  <p id="wheelText">Roue disponible aujourd'hui ✅</p>
+  <button onclick="spinWheel()">Tourner la roue</button>
+</div>
 
     <div class="secondary-card">
       <h3>Paris actifs</h3>

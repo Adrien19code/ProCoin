@@ -14,11 +14,7 @@ let activeBets = [];
 let wonBets = [];
 let lostBets = [];
 
-let availableBets = [
-  { id: 1, category: "Football", title: "PSG vs Marseille", options: ["PSG", "Nul", "OM"], result_date: "À définir", closed: false },
-  { id: 2, category: "Basket", title: "Lakers vs Celtics", options: ["Lakers", "Nul", "Celtics"], result_date: "À définir", closed: false },
-  { id: 3, category: "Gaming", title: "GTA 6 sortira-t-il en 2026 ?", options: ["Oui", "Non"], result_date: "01/01/2027", closed: false }
-];
+let availableBets = [];
 
 async function loadBetsFromSupabase() {
   const { data, error } = await supabaseClient
@@ -31,7 +27,7 @@ async function loadBetsFromSupabase() {
     return;
   }
 
-  availableBets = data;
+  availableBets = data || [];
   renderBets();
   renderAdminBets();
 }
@@ -162,7 +158,7 @@ function updateUI() {
   const wheelText = document.getElementById("wheelText");
   if (wheelText) {
     const today = new Date().toDateString();
-    const used = localStorage.getItem("procoin_wheel_date") === today;
+    const used = localStorage.getItem("procoin_wheel_date_" + currentUser) === today;
     wheelText.innerText = used ? "Roue déjà utilisée aujourd'hui ❌" : "Roue disponible aujourd'hui ✅";
   }
 
@@ -212,20 +208,41 @@ function watchAd() {
 
 function spinWheel() {
   const today = new Date().toDateString();
+  const wheelKey = "procoin_wheel_date_" + currentUser;
 
-  if (localStorage.getItem("procoin_wheel_date") === today) {
+  if (localStorage.getItem(wheelKey) === today) {
     alert("Tu as déjà tourné la roue aujourd'hui.");
     return;
   }
 
-  const rewards = [10, 20, 30, 50, 100];
-  const reward = rewards[Math.floor(Math.random() * rewards.length)];
+  const wheel = document.getElementById("wheel");
 
-  diamonds += reward;
-  localStorage.setItem("procoin_wheel_date", today);
+  if (!wheel) {
+    alert("Roue introuvable.");
+    return;
+  }
 
-  alert("🎡 Bravo ! Tu gagnes " + reward + " diamants 💎");
-  updateUI();
+  const rewards = [10, 20, 30, 50, 75, 100];
+  const rewardIndex = Math.floor(Math.random() * rewards.length);
+  const reward = rewards[rewardIndex];
+
+  const segmentAngle = 360 / rewards.length;
+  const stopAngle = 360 - (rewardIndex * segmentAngle + segmentAngle / 2);
+  const extraTurns = 360 * 6;
+  const finalRotation = extraTurns + stopAngle;
+
+  wheel.classList.add("spinning");
+  wheel.style.transform = `rotate(${finalRotation}deg)`;
+
+  setTimeout(() => {
+    diamonds += reward;
+    localStorage.setItem(wheelKey, today);
+
+    alert("🎡 Bravo ! Tu gagnes " + reward + " diamants 💎");
+
+    wheel.classList.remove("spinning");
+    updateUI();
+  }, 4200);
 }
 
 function hasAlreadyPlayed(betId) {

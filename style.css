@@ -478,3 +478,81 @@ body {
 .wheel-card {
   background: linear-gradient(135deg, #ff9f0a, #7c3aed);
 }
+
+.wheel-wrapper {
+  position: relative;
+  width: 230px;
+  height: 230px;
+  margin: 20px auto;
+}
+
+.wheel {
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #ffc928 0deg 60deg,
+    #7c3aed 60deg 120deg,
+    #2563eb 120deg 180deg,
+    #22c55e 180deg 240deg,
+    #ef4444 240deg 300deg,
+    #f97316 300deg 360deg
+  );
+  border: 8px solid rgba(255,255,255,0.25);
+  position: relative;
+  transition: transform 4s cubic-bezier(.17,.67,.2,1.01);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+}
+
+.wheel::before {
+  content: "";
+}
+
+.wheel-label {
+  position: absolute;
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  z-index: 1;
+}
+
+.label-1 { top: 46px; left: 140px; }
+.label-2 { top: 93px; left: 165px; }
+.label-3 { top: 153px; left: 138px; }
+.label-4 { top: 153px; left: 55px; }
+.label-5 { top: 93px; left: 35px; }
+.label-6 { top: 46px; left: 55px; }
+
+.wheel-center {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  background: #111827;
+  color: #ffc928;
+  border: 5px solid white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 900;
+  z-index: 2;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 34px;
+  color: white;
+  z-index: 5;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.wheel.spinning {
+  pointer-events: none;
+}
