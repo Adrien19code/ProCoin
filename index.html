@@ -126,6 +126,23 @@
     </div>
   </section>
 
+  <section id="admin" class="page">
+    <h2 class="section-title">Admin</h2>
+
+    <div class="admin-card">
+      <h3>Créer un pari</h3>
+
+      <input id="adminTitle" type="text" placeholder="Titre du pari">
+      <input id="adminCategory" type="text" placeholder="Catégorie">
+      <input id="adminOptions" type="text" placeholder="Choix séparés par des virgules">
+
+      <button onclick="createBet()">Créer le pari</button>
+    </div>
+
+    <h3 class="admin-subtitle">Paris existants</h3>
+    <div id="adminBetsList"></div>
+  </section>
+
 </div>
 
 <nav id="bottomNav" class="bottom-nav hidden">
@@ -139,6 +156,10 @@
 
   <button class="nav-btn" onclick="openPage('boutique', this)">
     <span>🪙</span>Boutique
+  </button>
+
+  <button id="adminNavBtn" class="nav-btn hidden" onclick="openPage('admin', this)">
+    <span>⚙️</span>Admin
   </button>
 </nav>
 

@@ -123,6 +123,17 @@ function showApp() {
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("bottomNav").classList.remove("hidden");
   document.getElementById("welcomeText").innerText = "Connecté : " + currentUser;
+
+  const adminBtn = document.getElementById("adminNavBtn");
+
+  if (adminBtn) {
+    if (currentUser === "admin") {
+      adminBtn.classList.remove("hidden");
+    } else {
+      adminBtn.classList.add("hidden");
+    }
+  }
+
   updateUI();
 }
 

@@ -1,414 +1,56 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
+/* ========================= */
+/* ADMIN */
+/* ========================= */
+
+.admin-card {
+  background: rgba(255,255,255,0.075);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 18px;
+  margin-bottom: 18px;
 }
 
-body {
-  min-height: 100vh;
-  background: linear-gradient(160deg, #101827, #18243a, #111827);
-  color: white;
+.admin-card h3 {
+  margin-bottom: 14px;
 }
 
-.hidden {
-  display: none !important;
-}
-
-.auth-screen {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-
-.auth-card {
+.admin-card input {
   width: 100%;
-  max-width: 390px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.35);
-}
-
-.auth-card h1 {
-  font-size: 34px;
-  margin-bottom: 8px;
-}
-
-.auth-card h1 span,
-.logo span {
-  color: #ffc928;
-}
-
-.auth-card p {
-  color: #b9c2d6;
-  margin-bottom: 20px;
-}
-
-.auth-card input {
-  width: 100%;
-  padding: 15px;
-  margin-bottom: 12px;
-  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 15px;
   border: none;
   background: rgba(255,255,255,0.1);
   color: white;
   outline: none;
 }
 
-.auth-card button {
+.admin-card input::placeholder {
+  color: #aeb7c9;
+}
+
+.admin-card button {
   width: 100%;
   padding: 14px;
-  border-radius: 16px;
-  border: none;
-  background: #ffc928;
-  color: #111;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 8px;
-}
-
-.auth-card button.secondary {
-  background: rgba(255,255,255,0.12);
-  color: white;
-}
-
-.app {
-  max-width: 480px;
-  margin: auto;
-  min-height: 100vh;
-  padding: 22px 18px 110px;
-}
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-}
-
-.logo {
-  font-size: 30px;
-  font-weight: 900;
-}
-
-.welcome {
-  color: #b9c2d6;
-  margin-top: 4px;
-  font-size: 14px;
-}
-
-.wallet-mini {
-  display: flex;
-  gap: 8px;
-}
-
-.wallet-mini div {
-  background: rgba(255,255,255,0.08);
-  padding: 9px 12px;
-  border-radius: 14px;
-  font-weight: bold;
-}
-
-.page {
-  display: none;
-  animation: fade .25s ease;
-}
-
-.page.active {
-  display: block;
-}
-
-@keyframes fade {
-  from {opacity: 0; transform: translateY(10px);}
-  to {opacity: 1; transform: translateY(0);}
-}
-
-.hero {
-  background: linear-gradient(135deg, #26385f, #151e33);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 28px;
-  padding: 24px;
-  margin-bottom: 18px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-}
-
-.hero h1 {
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-
-.hero p {
-  color: #b9c2d6;
-}
-
-.balance-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.balance-card {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 24px;
-  padding: 20px;
-}
-
-.balance-card .icon {
-  font-size: 32px;
-  margin-bottom: 10px;
-}
-
-.balance-card small {
-  color: #b8c0d0;
-}
-
-.balance-card h2 {
-  font-size: 30px;
-  margin-top: 5px;
-}
-
-.action-card {
-  background: linear-gradient(135deg, #7c3aed, #2563eb);
-  color: white;
-  border-radius: 24px;
-  padding: 22px;
-  margin-bottom: 18px;
-  font-weight: bold;
-  box-shadow: 0 15px 30px rgba(37, 99, 235, 0.25);
-}
-
-.action-card p {
-  margin: 8px 0;
-  color: #dbeafe;
-}
-
-.action-card button {
-  margin-top: 12px;
-  width: 100%;
-  background: white;
-  color: #111827;
-  border: none;
-  padding: 13px;
-  border-radius: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.secondary-card {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 22px;
-  padding: 20px;
-  margin-bottom: 14px;
-}
-
-.logout-btn {
-  width: 100%;
-  padding: 13px;
-  border-radius: 16px;
-  border: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.section-title {
-  font-size: 25px;
-  margin-bottom: 15px;
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  overflow-x: auto;
-}
-
-.tab {
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.07);
-  color: #c8d0df;
-  white-space: nowrap;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-}
-
-.tab.active {
-  background: #ffc928;
-  color: #111;
-  font-weight: bold;
-}
-
-.bet-card {
-  background: rgba(255,255,255,0.075);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 24px;
-  padding: 18px;
-  margin-bottom: 15px;
-}
-
-.bet-top {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  color: #b9c2d6;
-  font-size: 13px;
-}
-
-.bet-title {
-  font-size: 19px;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-.bet-options {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 9px;
-}
-
-.bet-options.two {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.bet-options button,
-.result-buttons button {
-  background: #22304d;
-  color: white;
-  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 15px;
-  padding: 13px 8px;
+  border: none;
+  background: #ffc928;
+  color: #111;
   font-weight: bold;
   cursor: pointer;
 }
 
-.bet-options button:hover,
-.result-buttons button:hover {
-  background: #ffc928;
-  color: #111;
+.admin-subtitle {
+  margin: 20px 0 12px;
+  font-size: 18px;
 }
 
-.result-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
+#adminBetsList {
+  margin-top: 10px;
 }
 
-.ad-placeholder {
-  background: linear-gradient(135deg, rgba(255,201,40,.18), rgba(124,58,237,.18));
-  border: 1px dashed rgba(255,255,255,0.25);
-  border-radius: 24px;
-  padding: 18px;
-  margin-bottom: 15px;
-  text-align: center;
-}
-
-.ad-placeholder small {
-  color: #ffc928;
-  font-weight: bold;
-}
-
-.ad-placeholder p {
-  color: #c8d0df;
-  margin-top: 6px;
-}
-
-.empty {
-  color: #aeb7c9;
-  background: rgba(255,255,255,0.06);
-  padding: 18px;
-  border-radius: 20px;
-}
-
-.shop-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background: rgba(255,255,255,0.075);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 24px;
-  padding: 17px;
-  margin-bottom: 14px;
-}
-
-.shop-icon {
-  width: 58px;
-  height: 58px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #25385f, #111827);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 28px;
-}
-
-.shop-info {
-  flex: 1;
-}
-
-.shop-info p {
-  color: #b9c2d6;
-  margin-top: 4px;
-}
-
-.price {
-  font-weight: bold;
-  color: #ffc928;
-}
-
-.disabled {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #aeb7c9;
-}
+/* Navigation avec Admin */
 
 .bottom-nav {
-  position: fixed;
-  bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 460px;
-  background: rgba(17, 24, 39, 0.88);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 28px;
-  padding: 10px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  box-shadow: 0 20px 45px rgba(0,0,0,0.4);
-}
-
-.nav-btn {
-  background: transparent;
-  border: none;
-  color: #8e98aa;
-  border-radius: 20px;
-  padding: 12px 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: .25s;
-}
-
-.nav-btn span {
-  display: block;
-  font-size: 21px;
-  margin-bottom: 3px;
-}
-
-.nav-btn.active {
-  background: linear-gradient(135deg, #ffc928, #ff9f0a);
-  color: #111;
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(255, 185, 0, 0.25);
+  grid-template-columns: repeat(4, 1fr);
 }
