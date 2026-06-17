@@ -342,6 +342,11 @@ async function validateBet(betId) {
 
   if (!bet) return;
 
+  if (bet.closed) {
+    alert("Ce résultat est déjà validé définitivement.");
+    return;
+  }
+
   const result = prompt("Résultat gagnant ?\nChoix possibles : " + bet.options.join(", "));
 
   if (!result || !bet.options.includes(result)) {
@@ -349,13 +354,23 @@ async function validateBet(betId) {
     return;
   }
 
+  const confirmation = confirm(
+    "Confirmer définitivement ce résultat ?\n\n" +
+    "Pari : " + bet.title + "\n" +
+    "Résultat : " + result + "\n\n" +
+    "Attention : tu ne pourras plus le modifier."
+  );
+
+  if (!confirmation) return;
+
   const { error } = await supabaseClient
     .from("bets")
     .update({
       closed: true,
       result: result
     })
-    .eq("id", betId);
+    .eq("id", betId)
+    .eq("closed", false);
 
   if (error) {
     console.error(error);
@@ -389,18 +404,26 @@ async function validateBet(betId) {
   saveUsers(users);
   loadUserData();
 
-  alert("Résultat validé ✅");
+  alert("Résultat validé définitivement ✅");
   await loadBetsFromSupabase();
   updateUI();
 }
 
 async function deleteBet(betId) {
+  const bet = availableBets.find(item => item.id === betId);
+
+  if (bet && bet.closed) {
+    alert("Impossible de supprimer un pari déjà validé.");
+    return;
+  }
+
   if (!confirm("Supprimer ce pari ?")) return;
 
   const { error } = await supabaseClient
     .from("bets")
     .delete()
-    .eq("id", betId);
+    .eq("id", betId)
+    .eq("closed", false);
 
   if (error) {
     console.error(error);
@@ -548,6 +571,25 @@ function renderAdminBets() {
   container.innerHTML = "";
 
   availableBets.forEach(bet => {
+
+    const actions = bet.closed
+      ? `
+        <div class="already-played">
+          ✅ Résultat validé : ${bet.result}
+        </div>
+      `
+      : `
+        <div class="result-buttons">
+          <button onclick="validateBet(${bet.id})">
+            Valider résultat
+          </button>
+
+          <button onclick="deleteBet(${bet.id})">
+            Supprimer
+          </button>
+        </div>
+      `;
+
     container.innerHTML += `
       <div class="bet-card">
         <div class="bet-top">
@@ -555,46 +597,19 @@ function renderAdminBets() {
           <span>${bet.closed ? "Terminé" : "Ouvert"}</span>
         </div>
 
-        <div class="result-date">📅 Résultat prévu : ${bet.result_date || "Date à définir"}</div>
+        <div class="result-date">
+          📅 Résultat prévu : ${bet.result_date || "Date à définir"}
+        </div>
 
-        <div class="bet-title">${bet.title}</div>
+        <div class="bet-title">
+          ${bet.title}
+        </div>
 
         <p>Choix : ${bet.options.join(", ")}</p>
         <p>Résultat : ${bet.result || "Non validé"}</p>
 
-        <div class="result-buttons">
-          <button onclick="validateBet(${bet.id})">Valider résultat</button>
-          <button onclick="deleteBet(${bet.id})">Supprimer</button>
-        </div>
+        ${actions}
       </div>
     `;
   });
 }
-
-window.onload = function () {
-  const users = getUsers();
-
-  if (!users["admin"]) {
-    users["admin"] = {
-      password: "admin123",
-      coins: 0,
-      diamonds: 100,
-      adsWatchedToday: 0,
-      activeBets: [],
-      wonBets: [],
-      lostBets: []
-    };
-
-    saveUsers(users);
-  }
-
-  const savedUser = localStorage.getItem("procoin_current_user");
-
-  if (savedUser) {
-    currentUser = savedUser;
-    loadUserData();
-    showApp();
-  }
-
-  loadBetsFromSupabase();
-};

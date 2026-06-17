@@ -564,3 +564,32 @@ body {
 .secondary-card {
   margin-top: 22px;
 }
+
+
+
+.wheel-wrapper {
+  position: relative !important;
+  margin-bottom: 40px !important;
+}
+
+.secondary-card {
+  position: relative !important;
+  z-index: 10 !important;
+  margin-top: 30px !important;
+}
+
+.wheel-card {
+  overflow: hidden !important;
+  padding-bottom: 22px !important;
+}
+
+.wheel-btn {
+  position: static !important;
+  display: block !important;
+  margin-top: 18px !important;
+}
+
+.secondary-card {
+  clear: both !important;
+  margin-top: 18px !important;
+}
