@@ -295,13 +295,19 @@ function placeBet(betId, choice) {
 }
 
 async function createBet() {
+
+  console.log("adminTitle =", document.getElementById("adminTitle"));
+  console.log("adminCategory =", document.getElementById("adminCategory"));
+  console.log("adminDate =", document.getElementById("adminDate"));
+
   const title = document.getElementById("adminTitle").value.trim();
   const category = document.getElementById("adminCategory").value.trim();
   const resultDate = document.getElementById("adminDate").value.trim();
-const options = ["Oui", "Non"];
 
-  if (!title || !category || !resultDate || options.length < 2) {
-    alert("Remplis le titre, la catégorie, la date et au moins 2 choix.");
+  const options = ["Oui", "Non"];
+
+  if (!title || !category || !resultDate) {
+    alert("Remplis le titre, la catégorie et la date.");
     return;
   }
 
@@ -326,7 +332,6 @@ const options = ["Oui", "Non"];
   document.getElementById("adminTitle").value = "";
   document.getElementById("adminCategory").value = "";
   document.getElementById("adminDate").value = "";
-
 
   alert("Pari créé ✅");
   await loadBetsFromSupabase();
