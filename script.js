@@ -294,47 +294,61 @@ function placeBet(betId, choice) {
   updateUI();
 }
 
-async function createBet() {
+async function deleteBet(betId) {
+  const bet = availableBets.find(item => item.id === betId);
 
-  console.log("adminTitle =", document.getElementById("adminTitle"));
-  console.log("adminCategory =", document.getElementById("adminCategory"));
-  console.log("adminDate =", document.getElementById("adminDate"));
-
-  const title = document.getElementById("adminTitle").value.trim();
-  const category = document.getElementById("adminCategory").value.trim();
-  const resultDate = document.getElementById("adminDate").value.trim();
-
-  const options = ["Oui", "Non"];
-
-  if (!title || !category || !resultDate) {
-    alert("Remplis le titre, la catégorie et la date.");
+  if (bet && bet.closed) {
+    alert("Impossible de supprimer un pari déjà validé.");
     return;
   }
+
+  if (!confirm("Supprimer ce pari ? Les joueurs seront remboursés.")) return;
+
+  activeBets.forEach(userBet => {
+    if (userBet.originalBetId === betId) {
+      diamonds += userBet.amount;
+    }
+  });
+
+  activeBets = activeBets.filter(userBet => userBet.originalBetId !== betId);
+
+  const users = getUsers();
+
+  Object.keys(users).forEach(username => {
+    const user = users[username];
+
+    const remainingActiveBets = [];
+
+    user.activeBets.forEach(userBet => {
+      if (userBet.originalBetId === betId) {
+        user.diamonds += userBet.amount;
+      } else {
+        remainingActiveBets.push(userBet);
+      }
+    });
+
+    user.activeBets = remainingActiveBets;
+  });
+
+  saveUsers(users);
+  loadUserData();
 
   const { error } = await supabaseClient
     .from("bets")
-    .insert([
-      {
-        title: title,
-        category: category,
-        result_date: resultDate,
-        options: options,
-        closed: false
-      }
-    ]);
+    .delete()
+    .eq("id", betId)
+    .eq("closed", false);
 
   if (error) {
     console.error(error);
-    alert("Erreur création pari.");
+    alert("Erreur suppression pari.");
     return;
   }
 
-  document.getElementById("adminTitle").value = "";
-  document.getElementById("adminCategory").value = "";
-  document.getElementById("adminDate").value = "";
+  alert("Pari supprimé et mises remboursées ✅");
 
-  alert("Pari créé ✅");
   await loadBetsFromSupabase();
+  updateUI();
 }
 
 async function validateBet(betId) {
@@ -417,7 +431,33 @@ async function deleteBet(betId) {
     return;
   }
 
-  if (!confirm("Supprimer ce pari ?")) return;
+  if (!confirm("Supprimer ce pari ? Les joueurs seront remboursés.")) return;
+
+  const users = getUsers();
+
+  Object.keys(users).forEach(username => {
+    const user = users[username];
+
+    if (!user.activeBets) user.activeBets = [];
+
+    const remainingActiveBets = [];
+
+    user.activeBets.forEach(userBet => {
+      if (userBet.originalBetId === betId) {
+        user.diamonds += userBet.amount;
+      } else {
+        remainingActiveBets.push(userBet);
+      }
+    });
+
+    user.activeBets = remainingActiveBets;
+  });
+
+  saveUsers(users);
+
+  if (currentUser) {
+    loadUserData();
+  }
 
   const { error } = await supabaseClient
     .from("bets")
@@ -431,14 +471,10 @@ async function deleteBet(betId) {
     return;
   }
 
-  await loadBetsFromSupabase();
-}
+  alert("Pari supprimé et mises remboursées ✅");
 
-function renderBets() {
-  renderAvailableBets();
-  renderActiveBets();
-  renderWonBets();
-  renderLostBets();
+  await loadBetsFromSupabase();
+  updateUI();
 }
 
 function renderAvailableBets() {
