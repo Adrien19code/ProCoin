@@ -293,62 +293,42 @@ function placeBet(betId, choice) {
   alert("Pari validé ✅");
   updateUI();
 }
+async function createBet() {
+  const title = document.getElementById("adminTitle").value.trim();
+  const category = document.getElementById("adminCategory").value.trim();
+  const resultDate = document.getElementById("adminDate").value.trim();
 
-async function deleteBet(betId) {
-  const bet = availableBets.find(item => item.id === betId);
+  const options = ["Oui", "Non"];
 
-  if (bet && bet.closed) {
-    alert("Impossible de supprimer un pari déjà validé.");
+  if (!title || !category || !resultDate) {
+    alert("Remplis le titre, la catégorie et la date.");
     return;
   }
-
-  if (!confirm("Supprimer ce pari ? Les joueurs seront remboursés.")) return;
-
-  activeBets.forEach(userBet => {
-    if (userBet.originalBetId === betId) {
-      diamonds += userBet.amount;
-    }
-  });
-
-  activeBets = activeBets.filter(userBet => userBet.originalBetId !== betId);
-
-  const users = getUsers();
-
-  Object.keys(users).forEach(username => {
-    const user = users[username];
-
-    const remainingActiveBets = [];
-
-    user.activeBets.forEach(userBet => {
-      if (userBet.originalBetId === betId) {
-        user.diamonds += userBet.amount;
-      } else {
-        remainingActiveBets.push(userBet);
-      }
-    });
-
-    user.activeBets = remainingActiveBets;
-  });
-
-  saveUsers(users);
-  loadUserData();
 
   const { error } = await supabaseClient
     .from("bets")
-    .delete()
-    .eq("id", betId)
-    .eq("closed", false);
+    .insert([
+      {
+        title: title,
+        category: category,
+        result_date: resultDate,
+        options: options,
+        closed: false
+      }
+    ]);
 
   if (error) {
     console.error(error);
-    alert("Erreur suppression pari.");
+    alert("Erreur création pari.");
     return;
   }
 
-  alert("Pari supprimé et mises remboursées ✅");
+  document.getElementById("adminTitle").value = "";
+  document.getElementById("adminCategory").value = "";
+  document.getElementById("adminDate").value = "";
 
+  alert("Pari créé ✅");
   await loadBetsFromSupabase();
-  updateUI();
 }
 
 async function validateBet(betId) {
@@ -396,6 +376,11 @@ async function validateBet(betId) {
 
   Object.keys(users).forEach(username => {
     const user = users[username];
+
+    if (!user.activeBets) user.activeBets = [];
+    if (!user.wonBets) user.wonBets = [];
+    if (!user.lostBets) user.lostBets = [];
+
     const remainingActiveBets = [];
 
     user.activeBets.forEach(userBet => {
@@ -416,7 +401,10 @@ async function validateBet(betId) {
   });
 
   saveUsers(users);
-  loadUserData();
+
+  if (currentUser) {
+    loadUserData();
+  }
 
   alert("Résultat validé définitivement ✅");
   await loadBetsFromSupabase();
@@ -475,6 +463,13 @@ async function deleteBet(betId) {
 
   await loadBetsFromSupabase();
   updateUI();
+}
+
+function renderBets() {
+  renderAvailableBets();
+  renderActiveBets();
+  renderWonBets();
+  renderLostBets();
 }
 
 function renderAvailableBets() {
@@ -607,7 +602,6 @@ function renderAdminBets() {
   container.innerHTML = "";
 
   availableBets.forEach(bet => {
-
     const actions = bet.closed
       ? `
         <div class="already-played">
@@ -616,13 +610,8 @@ function renderAdminBets() {
       `
       : `
         <div class="result-buttons">
-          <button onclick="validateBet(${bet.id})">
-            Valider résultat
-          </button>
-
-          <button onclick="deleteBet(${bet.id})">
-            Supprimer
-          </button>
+          <button onclick="validateBet(${bet.id})">Valider résultat</button>
+          <button onclick="deleteBet(${bet.id})">Supprimer</button>
         </div>
       `;
 
@@ -633,13 +622,9 @@ function renderAdminBets() {
           <span>${bet.closed ? "Terminé" : "Ouvert"}</span>
         </div>
 
-        <div class="result-date">
-          📅 Résultat prévu : ${bet.result_date || "Date à définir"}
-        </div>
+        <div class="result-date">📅 Résultat prévu : ${bet.result_date || "Date à définir"}</div>
 
-        <div class="bet-title">
-          ${bet.title}
-        </div>
+        <div class="bet-title">${bet.title}</div>
 
         <p>Choix : ${bet.options.join(", ")}</p>
         <p>Résultat : ${bet.result || "Non validé"}</p>
@@ -649,3 +634,31 @@ function renderAdminBets() {
     `;
   });
 }
+
+window.onload = function () {
+  const users = getUsers();
+
+  if (!users["admin"]) {
+    users["admin"] = {
+      password: "admin123",
+      coins: 0,
+      diamonds: 100,
+      adsWatchedToday: 0,
+      activeBets: [],
+      wonBets: [],
+      lostBets: []
+    };
+
+    saveUsers(users);
+  }
+
+  const savedUser = localStorage.getItem("procoin_current_user");
+
+  if (savedUser) {
+    currentUser = savedUser;
+    loadUserData();
+    showApp();
+  }
+
+  loadBetsFromSupabase();
+};
