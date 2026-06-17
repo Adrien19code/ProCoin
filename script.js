@@ -16,6 +16,10 @@ let lostBets = [];
 
 let availableBets = [];
 
+function usernameToEmail(username) {
+  return username.toLowerCase().trim() + "@procoin.com";
+}
+
 async function loadBetsFromSupabase() {
   const { data, error } = await supabaseClient
     .from("bets")
@@ -32,15 +36,7 @@ async function loadBetsFromSupabase() {
   renderAdminBets();
 }
 
-function getUsers() {
-  return JSON.parse(localStorage.getItem("procoin_users")) || {};
-}
-
-function saveUsers(users) {
-  localStorage.setItem("procoin_users", JSON.stringify(users));
-}
-
-function register() {
+async function register() {
   const username = document.getElementById("usernameInput").value.trim();
   const password = document.getElementById("passwordInput").value.trim();
 
@@ -49,49 +45,92 @@ function register() {
     return;
   }
 
-  const users = getUsers();
+  const email = usernameToEmail(username);
 
-  if (users[username]) {
-    alert("Ce pseudo existe déjà.");
+  const { data, error } = await supabaseClient.auth.signUp({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    console.error(error);
+    alert("Erreur création compte : " + error.message);
     return;
   }
 
-  users[username] = {
-    password: password,
-    coins: 0,
-    diamonds: 100,
-    adsWatchedToday: 0,
-    activeBets: [],
-    wonBets: [],
-    lostBets: []
-  };
+  let user = data.user;
 
-  saveUsers(users);
+  if (!user) {
+    const loginResult = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (loginResult.error) {
+      console.error(loginResult.error);
+      alert("Compte créé, mais connexion impossible.");
+      return;
+    }
+
+    const userResult = await supabaseClient.auth.getUser();
+    user = userResult.data.user;
+  }
+
+  const { error: profileError } = await supabaseClient
+    .from("profiles")
+    .insert([
+      {
+        id: user.id,
+        username: username,
+        coins: 0,
+        diamonds: 100,
+        ads_watched_today: 0,
+        active_bets: [],
+        won_bets: [],
+        lost_bets: []
+      }
+    ]);
+
+  if (profileError) {
+    console.error(profileError);
+    alert("Erreur profil : pseudo déjà utilisé ou profil impossible à créer.");
+    return;
+  }
+
   alert("Compte créé ✅");
-  login();
+  await login();
 }
 
-function login() {
+async function login() {
   const username = document.getElementById("usernameInput").value.trim();
   const password = document.getElementById("passwordInput").value.trim();
 
-  const users = getUsers();
+  if (!username || !password) {
+    alert("Entre ton pseudo et ton mot de passe.");
+    return;
+  }
 
-  if (!users[username] || users[username].password !== password) {
+  const email = usernameToEmail(username);
+
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    console.error(error);
     alert("Pseudo ou mot de passe incorrect.");
     return;
   }
 
-  currentUser = username;
-  localStorage.setItem("procoin_current_user", username);
-
-  loadUserData();
+  await loadUserData();
   showApp();
 }
 
-function logout() {
-  saveCurrentUserData();
-  localStorage.removeItem("procoin_current_user");
+async function logout() {
+  await saveCurrentUserData();
+  await supabaseClient.auth.signOut();
+
   currentUser = null;
 
   document.getElementById("authScreen").classList.remove("hidden");
@@ -99,32 +138,54 @@ function logout() {
   document.getElementById("bottomNav").classList.add("hidden");
 }
 
-function loadUserData() {
-  const users = getUsers();
-  const user = users[currentUser];
+async function loadUserData() {
+  const { data: userData } = await supabaseClient.auth.getUser();
 
-  coins = user.coins;
-  diamonds = user.diamonds;
-  adsWatchedToday = user.adsWatchedToday || 0;
-  activeBets = user.activeBets || [];
-  wonBets = user.wonBets || [];
-  lostBets = user.lostBets || [];
+  if (!userData.user) return;
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("id", userData.user.id)
+    .single();
+
+  if (error) {
+    console.error(error);
+    alert("Erreur chargement profil.");
+    return;
+  }
+
+  currentUser = data.username;
+
+  coins = data.coins || 0;
+  diamonds = data.diamonds || 100;
+  adsWatchedToday = data.ads_watched_today || 0;
+
+  activeBets = data.active_bets || [];
+  wonBets = data.won_bets || [];
+  lostBets = data.lost_bets || [];
 }
 
-function saveCurrentUserData() {
-  if (!currentUser) return;
+async function saveCurrentUserData() {
+  const { data: userData } = await supabaseClient.auth.getUser();
 
-  const users = getUsers();
-  if (!users[currentUser]) return;
+  if (!userData.user) return;
 
-  users[currentUser].coins = coins;
-  users[currentUser].diamonds = diamonds;
-  users[currentUser].adsWatchedToday = adsWatchedToday;
-  users[currentUser].activeBets = activeBets;
-  users[currentUser].wonBets = wonBets;
-  users[currentUser].lostBets = lostBets;
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({
+      coins: coins,
+      diamonds: diamonds,
+      ads_watched_today: adsWatchedToday,
+      active_bets: activeBets,
+      won_bets: wonBets,
+      lost_bets: lostBets
+    })
+    .eq("id", userData.user.id);
 
-  saveUsers(users);
+  if (error) {
+    console.error("Erreur sauvegarde profil :", error);
+  }
 }
 
 function showApp() {
@@ -145,21 +206,29 @@ function showApp() {
   loadBetsFromSupabase();
 }
 
+
 function updateUI() {
   document.getElementById("coinsTop").innerText = "🪙 " + coins;
   document.getElementById("diamondsTop").innerText = "💎 " + diamonds;
 
-  document.getElementById("coinsHome").innerText = coins;
-  document.getElementById("diamondsHome").innerText = diamonds;
+  const coinsHome = document.getElementById("coinsHome");
+  const diamondsHome = document.getElementById("diamondsHome");
+
+  if (coinsHome) coinsHome.innerText = coins;
+  if (diamondsHome) diamondsHome.innerText = diamonds;
 
   document.getElementById("adsText").innerText =
     "Pubs restantes aujourd'hui : " + (maxAdsPerDay - adsWatchedToday) + "/" + maxAdsPerDay;
 
   const wheelText = document.getElementById("wheelText");
-  if (wheelText) {
+
+  if (wheelText && currentUser) {
     const today = new Date().toDateString();
     const used = localStorage.getItem("procoin_wheel_date_" + currentUser) === today;
-    wheelText.innerText = used ? "Roue déjà utilisée aujourd'hui ❌" : "Roue disponible aujourd'hui ✅";
+
+    wheelText.innerText = used
+      ? "Roue déjà utilisée aujourd'hui ❌"
+      : "Roue disponible aujourd'hui ✅";
   }
 
   document.getElementById("activeCountHome").innerText =
@@ -167,6 +236,7 @@ function updateUI() {
 
   renderBets();
   renderAdminBets();
+
   saveCurrentUserData();
 }
 
@@ -223,11 +293,13 @@ function spinWheel() {
   }
 
   const rewards = [10, 20, 30, 50, 75, 100];
+
   const rewardIndex = Math.floor(Math.random() * rewards.length);
   const reward = rewards[rewardIndex];
 
   const segmentAngle = 360 / rewards.length;
   const stopAngle = 360 - (rewardIndex * segmentAngle + segmentAngle / 2);
+
   const extraTurns = 360 * 6;
   const finalRotation = extraTurns + stopAngle;
 
@@ -236,11 +308,13 @@ function spinWheel() {
 
   setTimeout(() => {
     diamonds += reward;
+
     localStorage.setItem(wheelKey, today);
 
     alert("🎡 Bravo ! Tu gagnes " + reward + " diamants 💎");
 
     wheel.classList.remove("spinning");
+
     updateUI();
   }, 4200);
 }
@@ -254,7 +328,7 @@ function hasAlreadyPlayed(betId) {
 }
 
 function placeBet(betId, choice) {
-  let bet = availableBets.find(item => item.id === betId);
+  const bet = availableBets.find(item => item.id === betId);
 
   if (!bet || bet.closed) {
     alert("Ce pari est terminé.");
@@ -266,7 +340,12 @@ function placeBet(betId, choice) {
     return;
   }
 
-  let amount = prompt("Combien de diamants veux-tu miser ?\nTu as " + diamonds + " diamants.");
+  let amount = prompt(
+    "Combien de diamants veux-tu miser ?\nTu as " +
+    diamonds +
+    " diamants."
+  );
+
   amount = Number(amount);
 
   if (!amount || amount <= 0) {
@@ -291,8 +370,10 @@ function placeBet(betId, choice) {
   });
 
   alert("Pari validé ✅");
+
   updateUI();
 }
+
 async function createBet() {
   const title = document.getElementById("adminTitle").value.trim();
   const category = document.getElementById("adminCategory").value.trim();
@@ -328,6 +409,7 @@ async function createBet() {
   document.getElementById("adminDate").value = "";
 
   alert("Pari créé ✅");
+
   await loadBetsFromSupabase();
 }
 
@@ -372,41 +454,62 @@ async function validateBet(betId) {
     return;
   }
 
-  const users = getUsers();
+  const { data: profiles, error: profilesError } = await supabaseClient
+    .from("profiles")
+    .select("*");
 
-  Object.keys(users).forEach(username => {
-    const user = users[username];
+  if (profilesError) {
+    console.error(profilesError);
+    alert("Résultat validé, mais erreur distribution des gains.");
+    await loadBetsFromSupabase();
+    updateUI();
+    return;
+  }
 
-    if (!user.activeBets) user.activeBets = [];
-    if (!user.wonBets) user.wonBets = [];
-    if (!user.lostBets) user.lostBets = [];
+  for (const profile of profiles) {
+    const profileActiveBets = profile.active_bets || [];
+    const profileWonBets = profile.won_bets || [];
+    const profileLostBets = profile.lost_bets || [];
 
     const remainingActiveBets = [];
+    let newCoins = profile.coins || 0;
+    let changed = false;
 
-    user.activeBets.forEach(userBet => {
+    profileActiveBets.forEach(userBet => {
       if (userBet.originalBetId === betId) {
+        changed = true;
+
         if (userBet.choice === result) {
           const gain = userBet.amount * 2;
-          user.coins += gain;
-          user.wonBets.push({ ...userBet, gain: gain });
+          newCoins += gain;
+          profileWonBets.push({ ...userBet, gain: gain });
         } else {
-          user.lostBets.push(userBet);
+          profileLostBets.push(userBet);
         }
       } else {
         remainingActiveBets.push(userBet);
       }
     });
 
-    user.activeBets = remainingActiveBets;
-  });
-
-  saveUsers(users);
+    if (changed) {
+      await supabaseClient
+        .from("profiles")
+        .update({
+          coins: newCoins,
+          active_bets: remainingActiveBets,
+          won_bets: profileWonBets,
+          lost_bets: profileLostBets
+        })
+        .eq("id", profile.id);
+    }
+  }
 
   if (currentUser) {
-    loadUserData();
+    await loadUserData();
   }
 
   alert("Résultat validé définitivement ✅");
+
   await loadBetsFromSupabase();
   updateUI();
 }
@@ -421,30 +524,41 @@ async function deleteBet(betId) {
 
   if (!confirm("Supprimer ce pari ? Les joueurs seront remboursés.")) return;
 
-  const users = getUsers();
+  const { data: profiles, error: profilesError } = await supabaseClient
+    .from("profiles")
+    .select("*");
 
-  Object.keys(users).forEach(username => {
-    const user = users[username];
+  if (profilesError) {
+    console.error(profilesError);
+    alert("Erreur récupération profils.");
+    return;
+  }
 
-    if (!user.activeBets) user.activeBets = [];
+  for (const profile of profiles) {
+    const profileActiveBets = profile.active_bets || [];
 
     const remainingActiveBets = [];
+    let newDiamonds = profile.diamonds || 0;
+    let changed = false;
 
-    user.activeBets.forEach(userBet => {
+    profileActiveBets.forEach(userBet => {
       if (userBet.originalBetId === betId) {
-        user.diamonds += userBet.amount;
+        changed = true;
+        newDiamonds += userBet.amount;
       } else {
         remainingActiveBets.push(userBet);
       }
     });
 
-    user.activeBets = remainingActiveBets;
-  });
-
-  saveUsers(users);
-
-  if (currentUser) {
-    loadUserData();
+    if (changed) {
+      await supabaseClient
+        .from("profiles")
+        .update({
+          diamonds: newDiamonds,
+          active_bets: remainingActiveBets
+        })
+        .eq("id", profile.id);
+    }
   }
 
   const { error } = await supabaseClient
@@ -457,6 +571,10 @@ async function deleteBet(betId) {
     console.error(error);
     alert("Erreur suppression pari.");
     return;
+  }
+
+  if (currentUser) {
+    await loadUserData();
   }
 
   alert("Pari supprimé et mises remboursées ✅");
@@ -635,28 +753,11 @@ function renderAdminBets() {
   });
 }
 
-window.onload = function () {
-  const users = getUsers();
+window.onload = async function () {
+  const { data } = await supabaseClient.auth.getSession();
 
-  if (!users["admin"]) {
-    users["admin"] = {
-      password: "admin123",
-      coins: 0,
-      diamonds: 100,
-      adsWatchedToday: 0,
-      activeBets: [],
-      wonBets: [],
-      lostBets: []
-    };
-
-    saveUsers(users);
-  }
-
-  const savedUser = localStorage.getItem("procoin_current_user");
-
-  if (savedUser) {
-    currentUser = savedUser;
-    loadUserData();
+  if (data.session) {
+    await loadUserData();
     showApp();
   }
 
