@@ -298,12 +298,7 @@ async function createBet() {
   const title = document.getElementById("adminTitle").value.trim();
   const category = document.getElementById("adminCategory").value.trim();
   const resultDate = document.getElementById("adminDate").value.trim();
-  const optionsText = document.getElementById("adminOptions").value.trim();
-
-  const options = optionsText
-    .split(",")
-    .map(option => option.trim())
-    .filter(option => option !== "");
+const options = ["Oui", "Non"];
 
   if (!title || !category || !resultDate || options.length < 2) {
     alert("Remplis le titre, la catégorie, la date et au moins 2 choix.");
@@ -331,7 +326,7 @@ async function createBet() {
   document.getElementById("adminTitle").value = "";
   document.getElementById("adminCategory").value = "";
   document.getElementById("adminDate").value = "";
-  document.getElementById("adminOptions").value = "";
+
 
   alert("Pari créé ✅");
   await loadBetsFromSupabase();
